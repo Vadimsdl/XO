@@ -3,81 +3,66 @@ $(document).ready( function(){
     var glob_hod = 0;
     var arr = [];
     for( var i = 1; i < 10; i++ )
-        arr[i] = [];
-    var count = 0;
-    var p = undefined;
+        arr[i] = ['-1'];
+    var result = null;
+    var count = arr.length-1;
+
 
     $( '.kletka' ).on( 'click', function() {
         
-        $.ajax({
-            url: 'ajax.php',
-            method: 'POST',
-            data: { hod: glob_hod, key: $( this ).attr( 'data-kletka' ) },
-            dataType: 'json',
-            success: function( data ) {
-                //console.log( data.key % 3 );
-                if( p === undefined ) {
-                    if( $( '.cirkl-'+data.key ).css( 'display' ) == 'none' && $( '.line-'+data.key ).css( 'display' ) == 'none' ) {
-                
-                        if( glob_hod == 0 )
-                            glob_hod = 1;
-                        else glob_hod = 0;
-                        count +=1;
-                        if( data.hod == 0 ) {
-                            $( '.cirkl-'+data.key ).fadeIn( 'slow' );
-                            arr[data.key].push( data.hod );
-                        } else {
-                            $( '.line-'+data.key ).fadeIn( 'slow' );
-                            arr[data.key].push( data.hod );
-                    
-                        }
-                    }
-                 
-                    if( count > 3 )
-                    p = proverka( arr );
-                    if( p === true ) {
+        var key = $( this ).attr( 'data-kletka' );
+        
+        /* Записываем в массив чей был ход, при помощи поиска номера поля в массиве */
+        if( $( '.cirkl-' + key ).css( 'display' ) == 'none' && $( '.line-' + key ).css( 'display' ) == 'none' && result === null ) {
+        
+            count -=1;
+            console.log( count );
+            arr[key][0] = glob_hod;
+            
+            /* ставим соответствующий знак о или х */
+            if( glob_hod == 0 )
+                $( '.cirkl-' + key ).fadeIn( 'slow' );
+            else
+                $( '.line-' + key ).fadeIn( 'slow' );
+            
+            if( count == 0 ) {
+                $('h2').text( 'Ничья' );
+                $('h2').fadeIn( 'slow' );
+            }
+        
+            $.ajax({
+                url: 'ajax.php',
+                method: 'POST',
+                data: { 
+                    arr: arr,
+                },
+                dataType: 'json',
+                success: function( data ) {
+                    /* проверка на ( занята ли клетка )? */
+                    /* Кто то победил ????? */
+                    result = data.res;
+                    if( data.res === true ) {
                         $('h2').text( 'Победа крестов' );
                         $('h2').fadeIn( 'slow' );
-                    } else if( p === false ) {
+                        return false;
+                    } else if( data.res === false ) {
                         $('h2').text( 'Победа нулей' );
                         $('h2').fadeIn( 'slow' );
-                    }
-                } else {
-                    return false;
+                        return false;
+                    } 
+                    /* смена хода */  
+                    glob_hod == 0 ? glob_hod = 1 : glob_hod = 0;
+                }, 
+                error: function() {
+                    console.log( 'error' );
                 }
-
-            }, 
-            error: function() {
-                console.log( 'error' );
-            }
-        });
-    });
-
-    function proverka( arr ) {
-        for( var i = 1; i < 9; i+=3 ){
-            if( arr[i][0] == '1' && arr[i+1][0] == '1' && arr[i+2][0] == '1' ) {
-                return true;
-            }
-            if( arr[i][0] == '0' && arr[i+1][0] == '0' && arr[i+2][0] == '0' ) {
-                return false;            }
-        }
-        for( var i = 1; i < 4; i++ ) {
-            if( arr[i][0] == '1' && arr[i+3][0] == '1' && arr[i+6][0] == '1' ) {
-                return true;
-            }
-            if( arr[i][0] == '0' && arr[i+3][0] == '0' && arr[i+6][0] == '0' ) {
-                return false;
-            }
-        }
-        if( ( arr[1][0] == '1' && arr[5][0] == '1' && arr[9][0] == '1' ) || 
-            ( arr[3][0] == '1' && arr[5][0] == '1' && arr[7][0] == '1' ) ) {
-            return true;
-        }
-        if( ( arr[1][0] == '0' && arr[5][0] == '0' && arr[9][0] == '0' ) || 
-            ( arr[3][0] == '0' && arr[5][0] == '0' && arr[7][0] == '0' ) ) {
+            });
+        } else if ( count == 0 ) {
+            $('h2').text( 'Ничья' );
+            $('h2').fadeIn( 'slow' );
+            return false;
+        } else {
             return false;
         }
-    }
-
-
+    });
 });
