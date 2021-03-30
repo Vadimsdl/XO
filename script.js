@@ -6,7 +6,7 @@ $(document).ready( function(){
         arr[i] = ['-1'];
     var result = null;
     var count = arr.length-1;
-
+    var next_pos = -1;
 
     $( '.kletka' ).on( 'click', function() {
         
@@ -16,7 +16,6 @@ $(document).ready( function(){
         if( $( '.cirkl-' + key ).css( 'display' ) == 'none' && $( '.line-' + key ).css( 'display' ) == 'none' && result === null ) {
         
             count -=1;
-            console.log( count );
             arr[key][0] = glob_hod;
             
             /* ставим соответствующий знак о или х */
@@ -35,10 +34,24 @@ $(document).ready( function(){
                 method: 'POST',
                 data: { 
                     arr: arr,
+                    bot_hod: 0,
+                    hod_now: glob_hod,
                 },
                 dataType: 'json',
                 success: function( data ) {
                     /* проверка на ( занята ли клетка )? */
+                    console.log( data );
+                    glob_hod == 0 ? glob_hod = 1 : glob_hod = 0;
+                    if( data.bots != -1 && glob_hod == 0 )
+                    {
+                        arr[data.bots][0] = glob_hod;
+                        if( glob_hod == 0 )
+                            $( '.cirkl-' + data.bots ).fadeIn( 'slow' );
+                        else
+                            $( '.line-' + data.bots ).fadeIn( 'slow' ); 
+                        glob_hod == 0 ? glob_hod = 1 : glob_hod = 0;
+                    }
+                
                     /* Кто то победил ????? */
                     result = data.res;
                     if( data.res === true ) {
@@ -51,7 +64,7 @@ $(document).ready( function(){
                         return false;
                     } 
                     /* смена хода */  
-                    glob_hod == 0 ? glob_hod = 1 : glob_hod = 0;
+                   
                 }, 
                 error: function() {
                     console.log( 'error' );
